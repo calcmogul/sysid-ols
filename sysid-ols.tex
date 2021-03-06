@@ -142,7 +142,7 @@ where $u$ is input voltage, $v$ is velocity, $a$ is acceleration, and $K_s$,
 $K_v$, and $K_a$ are constants reflecting how much each variable contributes to
 the required voltage.
 
-The System Identification tool uses Ordinary Least-Squares (OLS) on triplets of
+The System Identification tool uses ordinary least squares (OLS) on triplets of
 recorded voltage, velocity, and acceleration to obtain $K_s$, $K_v$, and $K_a$.
 The problem is we don't know acceleration directly, and the tool's current
 method of numerical differentiation of velocity is noisy. Ideally, we could find
