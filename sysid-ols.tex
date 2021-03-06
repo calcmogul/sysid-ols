@@ -1,0 +1,308 @@
+\documentclass[10pt,conference,compsoc]{IEEEtran}
+
+\usepackage{amsmath}
+\usepackage{bm}
+\usepackage{datetime}
+\usepackage{enumerate}
+\usepackage{graphicx}
+\PassOptionsToPackage{hyphens}{url}
+  \usepackage[colorlinks=true,linkcolor=blue]{hyperref}
+\usepackage{import}
+\usepackage{listings}
+\usepackage{parskip}
+\usepackage{tabulary}
+
+% Bibliography setup
+\usepackage[style=numeric,
+            citestyle=numeric,
+            defernumbers=true,
+            sorting=nyt,
+            sortcites=true,
+            autopunct=true,
+            autolang=hyphen,
+            hyperref=true,
+            abbreviate=false,
+            backref=true,
+            backend=biber]{biblatex}
+\addbibresource{sysid-ols.bib}
+\defbibheading{bibempty}{}
+
+\newcommand{\includecode}[2][c]{%
+  \lstinputlisting[escapechar=, style=custom#1]{#2}
+}
+
+% Load after hyperref
+\usepackage[style=super,nonumberlist,toc]{glossaries}
+\usepackage[notlof, notlot, nottoc]{tocbibind}
+\usepackage{tocloft}
+
+% Set up snippet environment
+\newcommand{\listsnippetsname}{\Large List of Snippets}
+\newlistof{snippets}{los}{\listsnippetsname}
+\cftsetindents{snippets}{\parindent}{1.5\parindent}
+\newenvironment{snippet}{
+  \renewcommand{\caption}[1]{
+    \refstepcounter{snippets}
+    \begin{center}
+      \par\noindent{\footnotesize Snippet \thesnippets. ##1}
+    \end{center}
+    \addcontentsline{los}{snippets}
+      {\protect \numberline{\thesnippets}{\ignorespaces ##1}}
+  }
+}
+{\par\noindent}
+
+\newcommand{\mtx}[1] {\bm #1}
+
+% Disable automatic indent and provide \indent command
+\newlength\tindent
+\setlength{\tindent}{\parindent}
+\setlength{\parindent}{0pt}
+\renewcommand{\indent}{\hspace*{\tindent}}
+
+\lstdefinestyle{customMatlab}{
+  language=Matlab,
+  breaklines=true,
+  xleftmargin=0.125in,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color{blue},
+  morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
+  identifierstyle=\color{black},
+  stringstyle=\color[RGB]{170, 55, 241},
+  commentstyle=\color[RGB]{28, 172, 0},
+  showstringspaces=false,
+  emph=[1]{for,end,break},emphstyle=[1]\color{red},
+}
+
+\lstdefinestyle{customcpp}{
+  belowcaptionskip=1\baselineskip,
+  breaklines=true,
+  xleftmargin=0.125in,
+  language=C++,
+  showstringspaces=false,
+  basicstyle=\footnotesize\ttfamily,
+  keywordstyle=\color[RGB]{128, 128, 0},
+  commentstyle=\color[RGB]{0, 128, 0},
+  identifierstyle=\color{black},
+  stringstyle=\color[RGB]{0, 128, 0},
+}
+
+% Paper header
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\lhead{System Identification Tool OLS Improvements}
+\rhead{\thepage}
+\lfoot{}
+\rfoot{}
+\fancyfoot[C]{}  % remove normal page numbers
+
+\allowdisplaybreaks
+
+\newdateformat{monthdayyeardate}{%
+  \monthname[\THEMONTH]~\THEDAY, \THEYEAR}
+\begin{document}
+\begin{titlepage}
+  \begin{center}
+    \vspace*{1cm}
+
+    \Huge
+    \textbf{System Identification Tool OLS Improvements}
+
+    \vspace{1.5cm}
+
+    \textbf{Tyler Veness}
+
+    \vfill
+
+    \vspace{0.8cm}
+  \end{center}
+
+  \vfill
+
+  \vspace{0.8cm}
+\end{titlepage}
+\thispagestyle{empty}  % no page number on title sheet
+
+\pagenumbering{roman}
+\renewcommand\contentsname{Table of Contents}
+\tableofcontents
+\thispagestyle{empty}  % no page number on table of contents sheet
+\clearpage
+
+\pagenumbering{arabic}
+
+\section{Introduction}
+
+The feedforward model utilized by the FRC System Identification tool is
+\begin{equation}
+  u = K_s + K_v v + K_a a \label{eq:u_ff}
+\end{equation}
+
+where $u$ is input voltage, $v$ is velocity, $a$ is acceleration, and $K_s$,
+$K_v$, and $K_a$ are constants reflecting how much each variable contributes to
+the required voltage.
+
+The System Identification tool uses Ordinary Least-Squares (OLS) on triplets of
+recorded voltage, velocity, and acceleration to obtain $K_s$, $K_v$, and $K_a$.
+The problem is we don't know acceleration directly, and the tool's current
+method of numerical differentiation of velocity is noisy. Ideally, we could find
+the characterization gains with samples of current velocity, current input, next
+velocity, and the nominal sample period instead.
+
+\section{Overview}
+
+First, we'll put equation \eqref{eq:u_ff} into the form
+$\frac{dx}{dt} = Ax + Bu + c$. Then, we'll discretize it to obtain an equation
+of the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma$. Then, we'll perform OLS
+on $x_{k+1} = \alpha x_k + \beta u_k + \gamma$ using triplets of current
+velocity, next velocity, and input voltage to obtain $\alpha$, $\beta$, and
+$\gamma$. Since we solved for those in the discretization step earlier, we have
+a system of three equations we can solve for $K_s$, $K_v$, and $K_a$.
+
+\section{Derivation}
+
+First, solve $u = K_s + K_v v + K_a a$ for $a$.
+\begin{align*}
+  K_a a &= u - K_s - K_v v \\
+  a &= \frac{1}{K_a} u - \frac{K_s}{K_a} - \frac{K_v}{K_a} v \\
+  a &= -\frac{K_v}{K_a} v + \frac{1}{K_a} u - \frac{K_s}{K_a}
+\end{align*}
+
+Let $x = v$, $\frac{dx}{dt} = a$, $A = -\frac{K_v}{K_a}$, $B = \frac{1}{K_a}$,
+and $c = -\frac{K_s}{K_a}$.
+\begin{equation*}
+  \frac{dx}{dt} = Ax + Bu + c
+\end{equation*}
+
+Integrating this according to appendix F.2 of \textit{Controls Engineering in
+FRC} \cite{bib:controls-in-frc} gives
+\begin{equation*}
+  x_{k+1} = e^{AT} x_k + A^{-1} (e^{AT} - I) (Bu_k + c)
+\end{equation*}
+
+where $T$ is the sample period.
+\begin{align*}
+  A_d &= e^{AT} \\
+  B_d &= A^{-1} (A_d - I) B \\
+  c_d &= B_d B^\dagger
+\end{align*}
+\begin{equation*}
+  \begin{aligned}
+    x_{k+1} =& A_d x_k + B_d u_k + B_d B^\dagger c \\
+    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - I) B B^\dagger c \\
+    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - I) c \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+      +& \left(-\frac{K_v}{K_a}\right)^{-1}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(\frac{1}{K_a}\right) u_k \\
+      +& \left(-\frac{K_v}{K_a}\right)^{-1}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(-\frac{K_s}{K_a}\right) \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+      -& \frac{K_a}{K_v}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \frac{1}{K_a} u_k \\
+      +& \frac{K_a}{K_v}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \frac{K_s}{K_a} \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+      -& \frac{1}{K_v}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right) u_k \\
+      -& \frac{K_s}{K_v}
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right) \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+      +& \left(\frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T}\right) u_k \\
+      +& \left(\frac{K_s}{K_v} - \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T}\right)
+  \end{aligned}
+\end{equation*}
+
+This equation has the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma$. Running
+OLS with $(x_{k+1}, x_k, u_k)$ triplets will give $\alpha$, $\beta$, and
+$\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
+\begin{equation*}
+  \begin{cases}
+    \alpha = e^{-\frac{K_v}{K_a} T} \\
+    \beta = \frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T} \\
+    \gamma = \frac{K_s}{K_v} - \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T}
+  \end{cases}
+\end{equation*}
+
+Substitute $\alpha$ into the second and third equation.
+\begin{equation}
+  \begin{cases}
+    \alpha = e^{-\frac{K_v}{K_a} T} \\
+    \beta = \frac{1}{K_v} - \frac{1}{K_v}\alpha \\
+    \gamma = \frac{K_s}{K_v} - \frac{K_s}{K_v}\alpha
+  \end{cases} \label{eq:system}
+\end{equation}
+
+Solve the second equation in \eqref{eq:system} for $K_v$.
+\begin{align}
+  \beta &= \frac{1}{K_v} - \frac{1}{K_v}\alpha \nonumber \\
+  K_v \beta &= 1 - \alpha \nonumber \\
+  K_v &= \frac{1 - \alpha}{\beta} \label{eq:kv}
+\end{align}
+
+Solve the first equation in \eqref{eq:system} for $K_a$.
+\begin{align*}
+  \alpha &= e^{-\frac{K_v}{K_a} T} \\
+  \ln\alpha &= -\frac{K_v}{K_a} T \\
+  K_a \ln\alpha &= -K_v T \\
+  K_a &= -\frac{K_v T}{\ln\alpha}
+\end{align*}
+
+Substitute in $K_v$ from equation \eqref{eq:kv}.
+\begin{align}
+  K_a &= -\frac{\left(\frac{1 - \alpha}{\beta}\right) T}{\ln\alpha} \nonumber \\
+  K_a &= -\frac{(1 - \alpha) T}{\beta \ln\alpha} \nonumber \\
+  K_a &= \frac{(\alpha - 1) T}{\beta \ln\alpha}
+\end{align}
+
+Solve the third equation in \eqref{eq:system} for $K_s$.
+\begin{align*}
+  \gamma &= \frac{K_s}{K_v} - \frac{K_s}{K_v} \alpha \\
+  K_v \gamma &= K_s - K_s \alpha \\
+  K_v \gamma &= K_s(1 - \alpha) \\
+  K_s &= \frac{K_v \gamma}{1 - \alpha}
+\end{align*}
+
+Substitute in $K_v$ from equation \eqref{eq:kv}.
+\begin{align}
+  K_s &= \frac{\left(\frac{1 - \alpha}{\beta}\right) \gamma}{1 - \alpha}
+    \nonumber \\
+  K_s &= \frac{\gamma}{\beta}
+\end{align}
+
+\section{Results}
+
+The new characterization process is as follows.
+\begin{itemize}
+  \item Gather input voltage and velocity from a dynamic acceleration event
+  \item Given an equation of the form
+    $x_{k+1} = \alpha x_k + \beta u_k + \gamma$, perform OLS on
+    $(x_{k+1}, x_k, u_k)$ triplets to obtain $\alpha$, $\beta$, and $\gamma$
+\end{itemize}
+
+The characterization gains are therefore
+\begin{align}
+  K_s &= \frac{\gamma}{\beta} \\
+  K_v &= \frac{1 - \alpha}{\beta} \\
+  K_a &= \frac{(\alpha - 1) T}{\beta \ln\alpha} \\
+      &\alpha > 0, \beta \neq 0 \nonumber
+\end{align}
+
+where $T$ is the sample period of the velocity data.
+
+For $K_s$, $K_v$, and $K_a$ to be defined, the dataset must include robot
+movement, and there must be a discernible relationship between a change in the
+input voltage and a change in the velocity (in other words, the robot must have
+accelerated).
+
+\section{Bibliography}
+
+\phantomsection
+\section*{Online}
+\addcontentsline{toc}{section}{Online}
+\printbibliography[heading=bibempty,type=online]
+
+\end{document}

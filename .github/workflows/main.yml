@@ -1,0 +1,21 @@
+name: CI
+
+on: [pull_request, push]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+    - name: Install system dependencies
+      run: make setup_ubuntu
+    - name: Lint .py and .tex files
+      run: make lint
+    - name: Generate PDF
+      run: make -j$(nproc)
+    - uses: actions/upload-artifact@v2
+      with:
+        name: sysid-ols.pdf
+        path: sysid-ols.pdf
