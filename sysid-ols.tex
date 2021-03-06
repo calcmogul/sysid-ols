@@ -177,20 +177,20 @@ and $c = -\frac{K_s}{K_a}$.
 Integrating this according to appendix F.2 of \textit{Controls Engineering in
 FRC} \cite{bib:controls-in-frc} gives
 \begin{equation*}
-  x_{k+1} = e^{AT} x_k + A^{-1} (e^{AT} - I) (Bu_k + c)
+  x_{k+1} = e^{AT} x_k + A^{-1} (e^{AT} - 1) (Bu_k + c)
 \end{equation*}
 
 where $T$ is the sample period.
 \begin{align*}
   A_d &= e^{AT} \\
-  B_d &= A^{-1} (A_d - I) B \\
+  B_d &= A^{-1} (A_d - 1) B \\
   c_d &= B_d B^\dagger
 \end{align*}
 \begin{equation*}
   \begin{aligned}
     x_{k+1} =& A_d x_k + B_d u_k + B_d B^\dagger c \\
-    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - I) B B^\dagger c \\
-    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - I) c \\
+    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - 1) B B^\dagger c \\
+    x_{k+1} =& A_d x_k + B_d u_k + A^{-1} (A_d - 1) c \\
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
       +& \left(-\frac{K_v}{K_a}\right)^{-1}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right)
