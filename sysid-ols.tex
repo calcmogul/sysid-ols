@@ -208,11 +208,11 @@ where $T$ is the sample period.
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
       -& \frac{1}{K_v}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right) u_k \\
-      -& \frac{K_s}{K_v}
+      +& \frac{K_s}{K_v}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right) \\
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
       +& \left(\frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T}\right) u_k \\
-      +& \left(\frac{K_s}{K_v} - \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T}\right)
+      +& \left(\frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T} - \frac{K_s}{K_v}\right)
   \end{aligned}
 \end{equation*}
 
@@ -223,7 +223,7 @@ $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
     \beta = \frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T} \\
-    \gamma = \frac{K_s}{K_v} - \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T}
+    \gamma = \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T} - \frac{K_s}{K_v}
   \end{cases}
 \end{equation*}
 
@@ -232,7 +232,7 @@ Substitute $\alpha$ into the second and third equation.
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
     \beta = \frac{1}{K_v} - \frac{1}{K_v}\alpha \\
-    \gamma = \frac{K_s}{K_v} - \frac{K_s}{K_v}\alpha
+    \gamma = \frac{K_s}{K_v}\alpha - \frac{K_s}{K_v}
   \end{cases} \label{eq:system}
 \end{equation}
 
@@ -260,17 +260,19 @@ Substitute in $K_v$ from equation \eqref{eq:kv}.
 
 Solve the third equation in \eqref{eq:system} for $K_s$.
 \begin{align*}
-  \gamma &= \frac{K_s}{K_v} - \frac{K_s}{K_v} \alpha \\
-  K_v \gamma &= K_s - K_s \alpha \\
-  K_v \gamma &= K_s(1 - \alpha) \\
-  K_s &= \frac{K_v \gamma}{1 - \alpha}
+  \gamma &= \frac{K_s}{K_v} \alpha - \frac{K_s}{K_v} \\
+  K_v \gamma &= K_s \alpha - K_s \\
+  K_v \gamma &= K_s(\alpha - 1) \\
+  K_s &= \frac{K_v \gamma}{\alpha - 1}
 \end{align*}
 
 Substitute in $K_v$ from equation \eqref{eq:kv}.
 \begin{align}
-  K_s &= \frac{\left(\frac{1 - \alpha}{\beta}\right) \gamma}{1 - \alpha}
+  K_s &= \frac{\left(\frac{1 - \alpha}{\beta}\right) \gamma}{\alpha - 1}
     \nonumber \\
-  K_s &= \frac{\gamma}{\beta}
+  K_s &= -\frac{\frac{1 - \alpha}{\beta} \gamma}{1 - \alpha}
+    \nonumber \\
+  K_s &= -\frac{\gamma}{\beta}
 \end{align}
 
 \section{Results}
@@ -285,7 +287,7 @@ The new characterization process is as follows.
 
 The characterization gains are therefore
 \begin{align}
-  K_s &= \frac{\gamma}{\beta} \\
+  K_s &= -\frac{\gamma}{\beta} \\
   K_v &= \frac{1 - \alpha}{\beta} \\
   K_a &= \frac{(\alpha - 1) T}{\beta \ln\alpha} \\
       &\alpha > 0, \beta \neq 0 \nonumber
