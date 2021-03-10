@@ -194,13 +194,10 @@ Substitute $A$, $B$, and $c$ back in and simplify.
         \left(e^{-\frac{K_v}{K_a} T} - 1\right)
         \frac{K_s}{K_a} \\
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
-      -& \frac{1}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right) u_k \\
+      +& \frac{1}{K_v}
+        \left(1 - e^{-\frac{K_v}{K_a} T}\right) u_k \\
       +& \frac{K_s}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right) \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
-      +& \left(\frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T}\right) u_k \\
-      +& \left(\frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T} - \frac{K_s}{K_v}\right)
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
   \end{aligned}
 \end{equation*}
 
@@ -210,8 +207,8 @@ $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
 \begin{equation*}
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
-    \beta = \frac{1}{K_v} - \frac{1}{K_v}e^{-\frac{K_v}{K_a} T} \\
-    \gamma = \frac{K_s}{K_v}e^{-\frac{K_v}{K_a} T} - \frac{K_s}{K_v}
+    \beta = \frac{1}{K_v}\left(1 - e^{-\frac{K_v}{K_a} T}\right) \\
+    \gamma = \frac{K_s}{K_v}\left(e^{-\frac{K_v}{K_a} T} - 1\right)
   \end{cases}
 \end{equation*}
 
@@ -219,14 +216,14 @@ Substitute $\alpha$ into the second and third equation.
 \begin{equation}
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
-    \beta = \frac{1}{K_v} - \frac{1}{K_v}\alpha \\
-    \gamma = \frac{K_s}{K_v}\alpha - \frac{K_s}{K_v}
+    \beta = \frac{1}{K_v}(1 - \alpha) \\
+    \gamma = \frac{K_s}{K_v}(\alpha - 1)
   \end{cases} \label{eq:system}
 \end{equation}
 
 Solve the second equation in \eqref{eq:system} for $K_v$.
 \begin{align}
-  \beta &= \frac{1}{K_v} - \frac{1}{K_v}\alpha \nonumber \\
+  \beta &= \frac{1}{K_v}(1 - \alpha) \nonumber \\
   K_v \beta &= 1 - \alpha \nonumber \\
   K_v &= \frac{1 - \alpha}{\beta} \label{eq:kv}
 \end{align}
@@ -248,8 +245,7 @@ Substitute in $K_v$ from equation \eqref{eq:kv}.
 
 Solve the third equation in \eqref{eq:system} for $K_s$.
 \begin{align*}
-  \gamma &= \frac{K_s}{K_v} \alpha - \frac{K_s}{K_v} \\
-  K_v \gamma &= K_s \alpha - K_s \\
+  \gamma &= \frac{K_s}{K_v}(\alpha - 1) \\
   K_v \gamma &= K_s(\alpha - 1) \\
   K_s &= \frac{K_v \gamma}{\alpha - 1}
 \end{align*}
