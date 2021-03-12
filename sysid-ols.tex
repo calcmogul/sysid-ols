@@ -1,6 +1,7 @@
 \documentclass[10pt,conference,compsoc]{IEEEtran}
 
 \usepackage{amsmath}
+\DeclareMathOperator{\sgn}{sgn}
 \usepackage{bm}
 \usepackage{datetime}
 \usepackage{enumerate}
@@ -107,7 +108,7 @@
 
 The feedforward model utilized by the FRC System Identification tool is
 \begin{equation}
-  u = K_s + K_v v + K_a a \label{eq:u_ff}
+  u = K_s\sgn(v) + K_v v + K_a a \label{eq:u_ff}
 \end{equation}
 
 where $u$ is input voltage, $v$ is velocity, $a$ is acceleration, and $K_s$,
@@ -125,23 +126,24 @@ velocity, and the nominal sample period instead.
 
 First, we'll put equation \eqref{eq:u_ff} into the form
 $\frac{dx}{dt} = Ax + Bu + c$. Then, we'll discretize it to obtain an equation
-of the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma$. Then, we'll perform OLS
-on $x_{k+1} = \alpha x_k + \beta u_k + \gamma$ using triplets of current
-velocity, next velocity, and input voltage to obtain $\alpha$, $\beta$, and
-$\gamma$. Since we solved for those in the discretization step earlier, we have
-a system of three equations we can solve for $K_s$, $K_v$, and $K_a$.
+of the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$. Then, we'll
+perform OLS on $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$ using
+triplets of current velocity, next velocity, and input voltage to obtain
+$\alpha$, $\beta$, and $\gamma$. Since we solved for those in the discretization
+step earlier, we have a system of three equations we can solve for $K_s$, $K_v$,
+and $K_a$.
 
 \section{Derivation}
 
-First, solve $u = K_s + K_v v + K_a a$ for $a$.
+First, solve $u = K_s\sgn(v) + K_v v + K_a a$ for $a$.
 \begin{align*}
-  K_a a &= u - K_s - K_v v \\
-  a &= \frac{1}{K_a} u - \frac{K_s}{K_a} - \frac{K_v}{K_a} v \\
-  a &= -\frac{K_v}{K_a} v + \frac{1}{K_a} u - \frac{K_s}{K_a}
+  K_a a &= u - K_s\sgn(v) - K_v v \\
+  a &= \frac{1}{K_a} u - \frac{K_s}{K_a}\sgn(v) - \frac{K_v}{K_a} v \\
+  a &= -\frac{K_v}{K_a} v + \frac{1}{K_a} u - \frac{K_s}{K_a}\sgn(v)
 \end{align*}
 
 Let $x = v$, $\frac{dx}{dt} = a$, $A = -\frac{K_v}{K_a}$, $B = \frac{1}{K_a}$,
-and $c = -\frac{K_s}{K_a}$.
+and $c = -\frac{K_s}{K_a}\sgn(x)$.
 \begin{equation*}
   \frac{dx}{dt} = Ax + Bu + c
 \end{equation*}
@@ -163,19 +165,19 @@ Substitute $A$, $B$, and $c$ back in and simplify.
         \left(\frac{1}{K_a}\right) u_k \\
       +& \left(-\frac{K_v}{K_a}\right)^{-1}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \left(-\frac{K_s}{K_a}\right) \\
+        \left(-\frac{K_s}{K_a}\sgn(x_k)\right) \\
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
       -& \frac{K_a}{K_v}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right)
         \frac{1}{K_a} u_k \\
       +& \frac{K_a}{K_v}
         \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \frac{K_s}{K_a} \\
+        \frac{K_s}{K_a}\sgn(x_k) \\
     x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
       +& \frac{1}{K_v}
         \left(1 - e^{-\frac{K_v}{K_a} T}\right) u_k \\
       +& \frac{K_s}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(e^{-\frac{K_v}{K_a} T} - 1\right)\sgn(x_k)
   \end{aligned}
 \end{equation*}
 
@@ -243,7 +245,7 @@ The new characterization process is as follows.
 \begin{itemize}
   \item Gather input voltage and velocity from a dynamic acceleration event
   \item Given an equation of the form
-    $x_{k+1} = \alpha x_k + \beta u_k + \gamma$, perform OLS on
+    $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$, perform OLS on
     $(x_{k+1}, x_k, u_k)$ triplets to obtain $\alpha$, $\beta$, and $\gamma$
 \end{itemize}
 
