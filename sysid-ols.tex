@@ -97,6 +97,8 @@
 \rfoot{}
 \fancyfoot[C]{}  % remove normal page numbers
 
+\newcommand{\mat}[1] {\mathbf{#1}}
+
 \allowdisplaybreaks
 \begin{document}
 
@@ -148,36 +150,38 @@ and $c = -\frac{K_s}{K_a}\sgn(x)$.
   \frac{dx}{dt} = Ax + Bu + c
 \end{equation*}
 
-Since $Bu + c$ is a constant over the time interval $[0, T)$ where $T$ is the
-sample period, this equation can be integrated according to appendix F.2 of
-\textit{Controls Engineering in FRC} \cite{bib:controls-in-frc}, which gives
+Since $Bu + c$ is a constant over the time interval $[0, T_k)$ where $T_k$ is
+the sample period for timestep $k$, this equation can be integrated according to
+appendix F.2 of \textit{Controls Engineering in FRC} \cite{bib:controls-in-frc},
+which gives
 \begin{equation*}
-  x_{k+1} = e^{AT} x_k + A^{-1} (e^{AT} - 1) (Bu_k + c)
+  x_{k+1} = e^{AT_k} x_k + A^{-1} (e^{AT_k} - 1) (Bu_k + c)
 \end{equation*}
 
 Substitute $A$, $B$, and $c$ back in and simplify.
 \begin{equation*}
   \begin{aligned}
-    x_{k+1} =& e^{AT} x_k + A^{-1} (e^{AT} - 1)Bu_k + A^{-1} (e^{AT} - 1)c \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+    x_{k+1} =& e^{AT_k} x_k + A^{-1} (e^{AT_k} - 1)Bu_k +
+      A^{-1} (e^{AT_k} - 1)c \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T_k} x_k \\
       +& \left(-\frac{K_v}{K_a}\right)^{-1}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)
         \left(\frac{1}{K_a}\right) u_k \\
       +& \left(-\frac{K_v}{K_a}\right)^{-1}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)
         \left(-\frac{K_s}{K_a}\sgn(x_k)\right) \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T_k} x_k \\
       -& \frac{K_a}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)
         \frac{1}{K_a} u_k \\
       +& \frac{K_a}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)
         \frac{K_s}{K_a}\sgn(x_k) \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T_k} x_k \\
       +& \frac{1}{K_v}
-        \left(1 - e^{-\frac{K_v}{K_a} T}\right) u_k \\
+        \left(1 - e^{-\frac{K_v}{K_a} T_k}\right) u_k \\
       +& \frac{K_s}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)\sgn(x_k)
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)\sgn(x_k)
   \end{aligned}
 \end{equation*}
 
@@ -186,16 +190,16 @@ OLS with $(x_{k+1}, x_k, u_k)$ triplets will give $\alpha$, $\beta$, and
 $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
 \begin{equation*}
   \begin{cases}
-    \alpha = e^{-\frac{K_v}{K_a} T} \\
-    \beta = \frac{1}{K_v}\left(1 - e^{-\frac{K_v}{K_a} T}\right) \\
-    \gamma = \frac{K_s}{K_v}\left(e^{-\frac{K_v}{K_a} T} - 1\right)
+    \alpha = e^{-\frac{K_v}{K_a} T_k} \\
+    \beta = \frac{1}{K_v}\left(1 - e^{-\frac{K_v}{K_a} T_k}\right) \\
+    \gamma = \frac{K_s}{K_v}\left(e^{-\frac{K_v}{K_a} T_k} - 1\right)
   \end{cases}
 \end{equation*}
 
 Substitute $\alpha$ into the second and third equation.
 \begin{equation}
   \begin{cases}
-    \alpha = e^{-\frac{K_v}{K_a} T} \\
+    \alpha = e^{-\frac{K_v}{K_a} T_k} \\
     \beta = \frac{1}{K_v}(1 - \alpha) \\
     \gamma = \frac{K_s}{K_v}(\alpha - 1)
   \end{cases} \label{eq:system}
@@ -257,12 +261,87 @@ The characterization gains are therefore
       &\alpha > 0, \beta \neq 0 \nonumber
 \end{align}
 
-where $T$ is the sample period of the velocity data.
+where $T$ is the average sample period of the velocity data.
 
 For $K_s$, $K_v$, and $K_a$ to be defined, the dataset must include robot
 movement, and there must be a discernible relationship between a change in the
 input voltage and a change in the velocity (in other words, the robot must have
 accelerated).
+
+\section{Nonlinear regression}
+
+In data fitting, where the goal is to find the parameters $\bm{\beta}$ such
+that a given model function $y = f(x, \bm{\beta})$ best fits some data points
+$(x_i, y_i)$, the functions $r_i$ are the residuals:
+\begin{equation*}
+  r_i(\bm{\beta}) = y_i - f(x_i, \bm{\beta})
+\end{equation*}
+
+Then, the Gauss-Newton method can be expressed in terms of the Jacobian
+$\mat{J_f}$ of the function $f$ as
+\begin{equation*}
+  \bm{\beta}^{(s+1)} = \bm{\beta}^{(s)} +
+    (\mat{J_f}^T \mat{J_f})^{-1} \mat{J_f}^T \mat{r}\left(\bm{\beta}^{(s)}\right)
+\end{equation*}
+
+\subsection{Specialization}
+\begin{equation*}
+  \begin{aligned}
+    x_{k+1} =& f(x_k, u_k, T_k, \bm{\beta}) \\
+    x_{k+1} =& e^{-\frac{K_v}{K_a} T_k} x_k \\
+      +& \frac{1}{K_v}
+        \left(1 - e^{-\frac{K_v}{K_a} T_k}\right) u_k \\
+      +& \frac{K_s}{K_v}
+        \left(e^{-\frac{K_v}{K_a} T_k} - 1\right)\sgn(x_k)
+  \end{aligned}
+\end{equation*}
+\begin{equation*}
+  \bm{\beta} = \begin{bmatrix}K_s \\ K_v \\ K_a\end{bmatrix}
+\end{equation*}
+
+% derivative of e^(-v/a t) x + 1/v (1 - e^(-v/a t)) u + s/v (e^(-v/a t) - 1)
+\begin{align*}
+  \mat{J}_{f,k} &= \frac{\partial f(x_k, u_k, T_k, \bm{\beta})}
+    {\partial \bm{\beta}} \\
+  \mat{J}_{f,k} &=
+  \left[
+  \begin{smallmatrix}
+    % with respect to s
+    \frac{1}{K_v}\left(e^{-\frac{K_v}{K_a} T_k} - 1\right) \\
+    % with respect to v
+    \frac{e^{-\frac{K_v}{K_a} T_k} \left(K_a (K_s\sgn(x_k) - u_k)
+      \left(e^{\frac{K_v}{K_a} T_k} - 1\right) -
+      T_k K_v (K_s\sgn(x_k) - u_k + K_v x_k)\right)}
+      {K_a K_v^2} \\
+    % with respect to a
+    \frac{T_k e^{-\frac{K_v}{K_a} T_k} (K_s\sgn(x_k) - u_k + K_v x_k)}{K_a^2}
+  \end{smallmatrix}
+  \right]^T
+\end{align*}
+
+Let $a_k = e^{-\frac{K_v}{K_a} T_k}$ and $b_k = K_s\sgn(x_k) - u_k + K_v x_k$.
+\begin{align*}
+  \mat{J}_{f,k} &=
+  \begin{bmatrix}
+    % with respect to s
+    \frac{1}{K_v}\left(a_k - 1\right) \\
+    % with respect to v
+    \frac{a_k \left(K_a (K_s\sgn(x_k) - u_k)\left(e^{\frac{K_v}{K_a} T_k} - 1\right) -
+      T_k K_v b_k\right)}{K_a K_v^2} \\
+    % with respect to a
+    \frac{T_k a_k b_k}{K_a^2}
+  \end{bmatrix}^T
+\end{align*}
+\begin{equation*}
+  r_k(\bm{\beta}) = x_{k+1} - f(x_k, u_k, T_k, \bm{\beta})
+\end{equation*}
+
+Then, the Gauss-Newton method can be expressed in terms of the Jacobian
+$\mat{J_{f}}$ of the function $f$ as
+\begin{equation*}
+  \bm{\beta}^{(s+1)} = \bm{\beta}^{(s)} +
+    (\mat{J_f}^T \mat{J_f})^{-1} \mat{J_f}^T \mat{r}\left(\bm{\beta}^{(s)}\right)
+\end{equation*}
 
 \section{Bibliography}
 
