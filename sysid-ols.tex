@@ -115,12 +115,12 @@ where $u$ is input voltage, $v$ is velocity, $a$ is acceleration, and $K_s$,
 $K_v$, and $K_a$ are constants reflecting how much each variable contributes to
 the required voltage.
 
-The System Identification tool uses ordinary least squares (OLS) on triplets of
-recorded voltage, velocity, and acceleration to obtain $K_s$, $K_v$, and $K_a$.
-The problem is we don't know acceleration directly, and the tool's current
-method of numerical differentiation of velocity is noisy. Ideally, we could find
-the characterization gains with samples of current velocity, current input, next
-velocity, and the nominal sample period instead.
+The System Identification tool uses ordinary least squares (OLS) on 4-tuples of
+recorded voltage, velocity sign, velocity, and acceleration to obtain $K_s$,
+$K_v$, and $K_a$. The problem is we don't know acceleration directly, and the
+tool's current method of numerical differentiation of velocity is noisy.
+Ideally, we could find the characterization gains with samples of current
+velocity, current input, next velocity, and the nominal sample period instead.
 
 \section{Overview}
 
@@ -128,10 +128,10 @@ First, we'll put equation \eqref{eq:u_ff} into the form
 $\frac{dx}{dt} = Ax + Bu + c$. Then, we'll discretize it to obtain an equation
 of the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$. Then, we'll
 perform OLS on $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$ using
-triplets of current velocity, next velocity, and input voltage to obtain
-$\alpha$, $\beta$, and $\gamma$. Since we solved for those in the discretization
-step earlier, we have a system of three equations we can solve for $K_s$, $K_v$,
-and $K_a$.
+4-tuples of current velocity, next velocity, input voltage, and velocity sign to
+obtain $\alpha$, $\beta$, and $\gamma$. Since we solved for those in the
+discretization step earlier, we have a system of three equations we can solve
+for $K_s$, $K_v$, and $K_a$.
 
 \section{Derivation}
 
@@ -182,8 +182,8 @@ Substitute $A$, $B$, and $c$ back in and simplify.
 \end{equation*}
 
 This equation has the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma$. Running
-OLS with $(x_{k+1}, x_k, u_k)$ triplets will give $\alpha$, $\beta$, and
-$\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
+OLS with $(x_{k+1}, x_k, u_k, \sgn(x_k))$ 4-tuples will give $\alpha$, $\beta$,
+and $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
 \begin{equation*}
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
@@ -246,7 +246,8 @@ The new characterization process is as follows.
   \item Gather input voltage and velocity from a dynamic acceleration event
   \item Given an equation of the form
     $x_{k+1} = \alpha x_k + \beta u_k + \gamma\sgn(x_k)$, perform OLS on
-    $(x_{k+1}, x_k, u_k)$ triplets to obtain $\alpha$, $\beta$, and $\gamma$
+    $(x_{k+1}, x_k, u_k, \sgn(x_k))$ 4-tuples to obtain $\alpha$, $\beta$, and
+    $\gamma$
 \end{itemize}
 
 The characterization gains are therefore
