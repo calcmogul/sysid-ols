@@ -151,33 +151,19 @@ and $c = -\frac{K_s}{K_a}\sgn(x)$.
 Since $Bu + c$ is a constant over the time interval $[0, T)$ where $T$ is the
 sample period, this equation can be integrated according to appendix F.2 of
 \textit{Controls Engineering in FRC} \cite{bib:controls-in-frc}, which gives
-\begin{equation*}
-  x_{k+1} = e^{AT} x_k + A^{-1} (e^{AT} - 1) (Bu_k + c)
-\end{equation*}
+\begin{align*}
+  x_{k+1} &= e^{AT} x_k + A^{-1} (e^{AT} - 1) (Bu_k + c) \\
+  x_{k+1} &= e^{AT} x_k + A^{-1} (e^{AT} - 1)Bu_k + A^{-1} (e^{AT} - 1)c
+\end{align*}
 
-Substitute $A$, $B$, and $c$ back in and simplify.
+Substitute $c$ back in.
 \begin{equation*}
   \begin{aligned}
-    x_{k+1} =& e^{AT} x_k + A^{-1} (e^{AT} - 1)Bu_k + A^{-1} (e^{AT} - 1)c \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
-      +& \left(-\frac{K_v}{K_a}\right)^{-1}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \left(\frac{1}{K_a}\right) u_k \\
-      +& \left(-\frac{K_v}{K_a}\right)^{-1}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \left(-\frac{K_s}{K_a}\sgn(x_k)\right) \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
-      -& \frac{K_a}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \frac{1}{K_a} u_k \\
-      +& \frac{K_a}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)
-        \frac{K_s}{K_a}\sgn(x_k) \\
-    x_{k+1} =& e^{-\frac{K_v}{K_a} T} x_k \\
-      +& \frac{1}{K_v}
-        \left(1 - e^{-\frac{K_v}{K_a} T}\right) u_k \\
-      +& \frac{K_s}{K_v}
-        \left(e^{-\frac{K_v}{K_a} T} - 1\right)\sgn(x_k)
+    x_{k+1} =& e^{AT} x_k + A^{-1} \left(e^{AT} - 1\right) B u_k \\
+      +& A^{-1} \left(e^{AT} - 1\right) \left(-\frac{K_s}{K_a} \sgn(x_k)\right)
+      \\
+    x_{k+1} =& e^{AT} x_k +  A^{-1} \left(e^{AT} - 1\right) B u_k \\
+      -& \frac{K_s}{K_a} A^{-1} \left(e^{AT} - 1\right) \sgn(x_k)
   \end{aligned}
 \end{equation*}
 
@@ -187,24 +173,39 @@ $(x_{k+1}, x_k, u_k, \sgn(x_k))$ 4-tuples will give $\alpha$, $\beta$, and
 $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
 \begin{equation*}
   \begin{cases}
-    \alpha = e^{-\frac{K_v}{K_a} T} \\
-    \beta = \frac{1}{K_v}\left(1 - e^{-\frac{K_v}{K_a} T}\right) \\
-    \gamma = \frac{K_s}{K_v}\left(e^{-\frac{K_v}{K_a} T} - 1\right)
+    \alpha = e^{AT} \\
+    \beta = A^{-1} \left(e^{AT} - 1\right)B \\
+    \gamma = -\frac{K_s}{K_a} A^{-1} \left(e^{AT} - 1\right)
   \end{cases}
 \end{equation*}
 
 Substitute $\alpha$ into the second and third equation.
 \begin{equation}
   \begin{cases}
-    \alpha = e^{-\frac{K_v}{K_a} T} \\
-    \beta = \frac{1}{K_v}(1 - \alpha) \\
-    \gamma = \frac{K_s}{K_v}(\alpha - 1)
+    \alpha = e^{AT} \\
+    \beta = A^{-1} (\alpha - 1) B \\
+    \gamma = -\frac{K_s}{K_a} A^{-1} (\alpha - 1)
   \end{cases} \label{eq:system}
 \end{equation}
 
+Divide the second equation by the third equation and solve for $K_s$.
+\begin{align}
+  \frac{\beta}{\gamma} &= \frac{A^{-1} (\alpha - 1) B}
+    {-\frac{K_s}{K_a} A^{-1} (\alpha - 1)} \nonumber \\
+  \frac{\beta}{\gamma} &= -\frac{K_a B}{K_s} \nonumber \\
+  \frac{\beta}{\gamma} &= -\frac{K_a \left(\frac{1}{K_a}\right)}{K_s} \nonumber
+    \\
+  \frac{\beta}{\gamma} &= -\frac{1}{K_s} \nonumber \\
+  K_s &= -\frac{\gamma}{\beta}
+\end{align}
+
 Solve the second equation in \eqref{eq:system} for $K_v$.
 \begin{align}
-  \beta &= \frac{1}{K_v}(1 - \alpha) \nonumber \\
+  \beta &= A^{-1} (\alpha - 1) B \nonumber \\
+  \beta &= \left(-\frac{K_v}{K_a}\right)^{-1} (\alpha - 1)
+    \left(\frac{1}{K_a}\right) \nonumber \\
+  \beta &= -\frac{K_a}{K_v} (\alpha - 1) \frac{1}{K_a} \nonumber \\
+  \beta &= \frac{1}{K_v} (1 - \alpha) \nonumber \\
   K_v \beta &= 1 - \alpha \nonumber \\
   K_v &= \frac{1 - \alpha}{\beta} \label{eq:kv}
 \end{align}
@@ -222,22 +223,6 @@ Substitute in $K_v$ from equation \eqref{eq:kv}.
   K_a &= -\frac{\left(\frac{1 - \alpha}{\beta}\right) T}{\ln\alpha} \nonumber \\
   K_a &= -\frac{(1 - \alpha) T}{\beta \ln\alpha} \nonumber \\
   K_a &= \frac{(\alpha - 1) T}{\beta \ln\alpha}
-\end{align}
-
-Solve the third equation in \eqref{eq:system} for $K_s$.
-\begin{align*}
-  \gamma &= \frac{K_s}{K_v}(\alpha - 1) \\
-  K_v \gamma &= K_s(\alpha - 1) \\
-  K_s &= \frac{K_v \gamma}{\alpha - 1}
-\end{align*}
-
-Substitute in $K_v$ from equation \eqref{eq:kv}.
-\begin{align}
-  K_s &= \frac{\left(\frac{1 - \alpha}{\beta}\right) \gamma}{\alpha - 1}
-    \nonumber \\
-  K_s &= -\frac{\frac{1 - \alpha}{\beta} \gamma}{1 - \alpha}
-    \nonumber \\
-  K_s &= -\frac{\gamma}{\beta}
 \end{align}
 
 \section{Results}
