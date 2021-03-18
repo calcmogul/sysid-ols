@@ -181,9 +181,10 @@ Substitute $A$, $B$, and $c$ back in and simplify.
   \end{aligned}
 \end{equation*}
 
-This equation has the form $x_{k+1} = \alpha x_k + \beta u_k + \gamma$. Running
-OLS with $(x_{k+1}, x_k, u_k, \sgn(x_k))$ 4-tuples will give $\alpha$, $\beta$,
-and $\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
+This equation has the form
+$x_{k+1} = \alpha x_k + \beta u_k + \gamma \sgn(x_k)$. Running OLS with
+$(x_{k+1}, x_k, u_k, \sgn(x_k))$ 4-tuples will give $\alpha$, $\beta$, and
+$\gamma$. To obtain $K_s$, $K_v$, and $K_a$, solve the following system.
 \begin{equation*}
   \begin{cases}
     \alpha = e^{-\frac{K_v}{K_a} T} \\
