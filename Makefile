@@ -35,7 +35,7 @@ clean: clean_tex
 .PHONY: clean_tex
 clean_tex:
 	latexmk -xelatex -C
-	rm -f sysid-ols.pdf
+	rm -f $(TARGET)
 
 .PHONY: upload
 upload:
