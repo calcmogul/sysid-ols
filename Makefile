@@ -74,5 +74,8 @@ setup_ubuntu:
 		python3-pip \
 		python3-requests \
 		python3-setuptools
-	# The Ubuntu 20.04 package is too old
-	pip3 install --user black
+	# The Ubuntu 22.04 packages are too old
+	# Python packages
+	#   * black (to format Python source code)
+	#   * pylint (for Python linting)
+	pip3 install --user --break-system-packages autoflake black==24.3.0 pylint

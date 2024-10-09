@@ -4,18 +4,15 @@ on: [pull_request, push]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    - name: Install system dependencies
-      run: make setup_ubuntu
-    - name: Lint .py and .tex files
-      run: make lint
-    - name: Generate PDF
-      run: make -j$(nproc)
-    - uses: actions/upload-artifact@v2
+    - run: make setup_ubuntu
+    - run: make lint
+    - run: make -j$(nproc)
+    - uses: actions/upload-artifact@v4
       with:
         name: sysid-ols.pdf
         path: sysid-ols.pdf
