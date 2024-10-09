@@ -1,38 +1,47 @@
 #!/usr/bin/env python3
 
-"""Ensure every .tex file is transitively included by sysid-ols.tex
-"""
+"""Ensure every .tex file is transitively included by sysid-ols.tex."""
 
 import os
 import re
 import sys
 
 ROOT = "sysid-ols.tex"
+
+
+class Node:
+    """
+    Tuples are filename and whether filename has been parsed (whether node has
+    been visited)
+    """
+
+    def __init__(self, filename):
+        self.filename = filename
+        self.visited = False
+
+
+# Configure visit()'s state for files
 files = [
     os.path.join(dp, f)[2:]
     for dp, dn, fn in os.walk(".")
     for f in fn
     if f.endswith(".tex") and "build/venv/" not in dp
 ]
-
-# Tuples are filename and whether filename has been parsed (whether node has
-# been visited)
-class Node:
-    def __init__(self, filename):
-        self.filename = filename
-        self.visited = False
-
-
 nodes = {f: Node(f) for f in files}
 latex_vars = {}
 error_occurred = False
 
 
 def visit(filename):
+    """Recurse through a file's includes."""
     nodes[filename].visited = True
 
+    # Ignore files that break parsing
+    if "preamble/" in filename:
+        return
+
     # Get file contents
-    with open(filename, "r") as f:
+    with open(filename, "r", encoding="utf-8") as f:
         contents = f.read()
 
     rgx = re.compile(
@@ -71,10 +80,12 @@ def visit(filename):
                 print(
                     f"[{filename}:{linecount}] error: included file '{subfile}' does not exist"
                 )
+                # pragma pylint: disable=global-statement
+                global error_occurred
                 error_occurred = True
 
 
-# Start at sysid-ols.tex and perform depth-first search of file includes
+# Start at root .tex file and perform depth-first search of file includes
 visit(ROOT)
 
 if not all(node.visited for node in nodes.values()):
