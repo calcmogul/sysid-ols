@@ -9,7 +9,7 @@
 \PassOptionsToPackage{hyphens}{url}
   \usepackage[colorlinks=true,linkcolor=blue]{hyperref}
 \usepackage{import}
-\usepackage{listings}
+\usepackage{lmodern}
 \usepackage{parskip}
 \usepackage{tabulary}
 
@@ -27,10 +27,6 @@
             backend=biber]{biblatex}
 \addbibresource{sysid-ols.bib}
 \defbibheading{bibempty}{}
-
-\newcommand{\includecode}[2][c]{%
-  \lstinputlisting[escapechar=, style=custom#1]{#2}
-}
 
 % Load after hyperref
 \usepackage[style=super,nonumberlist,toc]{glossaries}
@@ -60,33 +56,6 @@
 \setlength{\tindent}{\parindent}
 \setlength{\parindent}{0pt}
 \renewcommand{\indent}{\hspace*{\tindent}}
-
-\lstdefinestyle{customMatlab}{
-  language=Matlab,
-  breaklines=true,
-  xleftmargin=0.125in,
-  basicstyle=\footnotesize\ttfamily,
-  keywordstyle=\color{blue},
-  morekeywords=[2]{1}, keywordstyle=[2]{\color{black}},
-  identifierstyle=\color{black},
-  stringstyle=\color[RGB]{170, 55, 241},
-  commentstyle=\color[RGB]{28, 172, 0},
-  showstringspaces=false,
-  emph=[1]{for,end,break},emphstyle=[1]\color{red},
-}
-
-\lstdefinestyle{customcpp}{
-  belowcaptionskip=1\baselineskip,
-  breaklines=true,
-  xleftmargin=0.125in,
-  language=C++,
-  showstringspaces=false,
-  basicstyle=\footnotesize\ttfamily,
-  keywordstyle=\color[RGB]{128, 128, 0},
-  commentstyle=\color[RGB]{0, 128, 0},
-  identifierstyle=\color{black},
-  stringstyle=\color[RGB]{0, 128, 0},
-}
 
 % Paper header
 \usepackage{fancyhdr}
