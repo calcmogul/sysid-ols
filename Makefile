@@ -17,7 +17,6 @@ $(TARGET): $(basename $(TARGET)).tex $(BIB)
 format:
 	./lint/format_bibliography.py
 	./lint/format_eol.py
-	./lint/format_json.py
 	./lint/format_paragraph_breaks.py
 	python3 -m black -q .
 

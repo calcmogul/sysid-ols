@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-"""Ensure every .tex file is transitively included by sysid-ols.tex."""
+"""Ensure every .tex file is transitively included by sysid-ols.tex"""
 
 import os
 import re
 import sys
-
-ROOT = "sysid-ols.tex"
+from pathlib import Path
 
 
 class Node:
@@ -15,30 +14,25 @@ class Node:
     been visited)
     """
 
-    def __init__(self, filename):
+    def __init__(self, filename: Path):
         self.filename = filename
         self.visited = False
 
 
-# Configure visit()'s state for files
-files = [
-    os.path.join(dp, f)[2:]
-    for dp, dn, fn in os.walk(".")
-    for f in fn
-    if f.endswith(".tex") and "build/venv/" not in dp
-]
-nodes = {f: Node(f) for f in files}
-latex_vars = {}
-error_occurred = False
+def visit(filename: Path, nodes: dict[Path, Node], latex_vars: dict[str, str]) -> bool:
+    """
+    Recurse through a file's includes.
 
+    Returns:
+        True if error occurred.
+    """
 
-def visit(filename):
-    """Recurse through a file's includes."""
+    error_occurred: bool = False
     nodes[filename].visited = True
 
     # Ignore files that break parsing
-    if "preamble/" in filename:
-        return
+    if filename.is_relative_to("./preamble"):
+        return False
 
     # Get file contents
     with open(filename, "r", encoding="utf-8") as f:
@@ -69,8 +63,8 @@ def visit(filename):
                     subfile = subfile.replace(var[0], var[1])
 
             try:
-                if not nodes[subfile].visited:
-                    visit(subfile)
+                if not nodes[Path(subfile)].visited:
+                    error_occurred |= visit(Path(subfile), nodes, latex_vars)
             except KeyError:
                 # Get line regex match was on
                 linecount = 1
@@ -80,26 +74,42 @@ def visit(filename):
                 print(
                     f"[{filename}:{linecount}] error: included file '{subfile}' does not exist"
                 )
-                # pragma pylint: disable=global-statement
-                global error_occurred
                 error_occurred = True
+    return error_occurred
 
 
-# Start at root .tex file and perform depth-first search of file includes
-visit(ROOT)
+def check(root: Path, other_root_names: list[str]):
+    files: list[Path] = [
+        f
+        for f in Path(".").rglob("*")
+        if f.suffix == ".tex"
+        and not f.is_relative_to("./build/venv")
+        and f.name not in other_root_names
+    ]
+    nodes: dict[Path, Node] = {f: Node(f) for f in files}
+    latex_vars: dict[str, str] = {}
 
-if not all(node.visited for node in nodes.values()):
-    orphans = [node.filename for node in nodes.values() if not node.visited]
+    # Start at root .tex file and perform depth-first search of file includes
+    error_occurred: bool = visit(root, nodes, latex_vars)
 
-    print(f"error: {len(orphans)} .tex file", end="")
-    if len(orphans) > 1:
-        print("s", end="")
-    print(f" not transitively included in {ROOT}:")
+    if not all(node.visited for node in nodes.values()):
+        orphans = [node.filename for node in nodes.values() if not node.visited]
 
-    for orphan in orphans:
-        print("    " + orphan)
-    sys.exit(1)
-elif error_occurred:
-    sys.exit(1)
-else:
-    sys.exit(0)
+        print(f"error: {len(orphans)} .tex file", end="")
+        if len(orphans) > 1:
+            print("s", end="")
+        print(f" not transitively included in {root}:")
+
+        for orphan in orphans:
+            print("    " + orphan.as_posix())
+        sys.exit(1)
+    elif error_occurred:
+        sys.exit(1)
+
+
+def main():
+    check(Path("sysid-ols.tex"), [])
+
+
+if __name__ == "__main__":
+    main()
